@@ -209,15 +209,19 @@ function getFiles(folderId) {
 }
 
 function sendFileStream(req, res) {
-  const fileId = req.query.id;
+  const fileId = req.query.id || req.params.id;
+  if (!fileId) res.sendStatus(404);
   drive.files.get(
     {
       fileId,
       alt: "media"
     },
-    { responseType: "stream" },
+    { responseType: "stream", ...req.headers },
     (err, resp) => {
       if (!err) {
+        Object.keys(resp.headers).forEach(val => {
+          res.setHeader(val, resp.headers[val]);
+        });
         resp.data
           .on("end", () => {})
           .on("error", () => {})
